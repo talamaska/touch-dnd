@@ -66,15 +66,16 @@
     this.el[0].style.pointerEvents = 'none'
     $(document).on('mousemove touchmove MSPointerMove pointermove', $.proxy(this.move, this))
     transition(this.el[0], '')
-    this.eventHandler.trigger('dragging:start')
+    this.eventHandler.trigger('dragging:start', { item: el });
     return this.el
   }
   
-  Dragging.prototype.stop = function(revert) {
+  Dragging.prototype.stop = function (revert) {
+    var self = this;
     if (this.last) {
       var last = this.last
       this.last = null
-      $(last).trigger('dragging:drop')
+      $(last).trigger('dragging:drop', { item: self.el })
     }
     if (!this.el) return
     if (revert === undefined) revert = true
@@ -86,7 +87,7 @@
     this.el[0].style.pointerEvents = 'auto'
     $(document).off('mousemove touchmove MSPointerMove pointermove', this.move)
     this.parent = this.el = this.placeholder = null
-    this.eventHandler.trigger('dragging:stop')
+    this.eventHandler.trigger('dragging:stop', { item: self.el });
   }
 
   Dragging.prototype.move = function(e) {
@@ -557,6 +558,7 @@
     e.stopPropagation()
     e.preventDefault()
 
+    var self = this;
     if (!dragging.el) return
     
     this.el.trigger('sortable:beforeStop', { item: dragging.el })
@@ -564,10 +566,11 @@
     // revert
     dragging.el.insertBefore(this.el.find(this.opts.items).get(this.index))
     $(document).off('mouseup touchend MSPointerUp pointerup', this.end)
-    setTimeout(function() {
-      dragging.stop()
-      this.el.trigger('dragging:stop')
-    })
+    setTimeout(function () {
+     
+        dragging.stop()
+        self.el.trigger('dragging:stop', { item: dragging.el })
+    },10);
     
     this.index = null
   }
@@ -606,14 +609,14 @@
     this.el.trigger('sortable:beforeStop', { item: dragging.el })
     if (dragging.parent instanceof Sortable) {
       dragging.parent.index = null
-      dragging.parent.el.trigger('dragging:stop')
+      dragging.parent.el.trigger('dragging:stop', { item: dragging.el })
     }
     
     // revert
     $(document).off('mouseup touchend MSPointerUp pointerup', this.end)
     dragging.stop(false)
     
-    this.el.trigger('dragging:stop')
+    this.el.trigger('dragging:stop', { item: dragging.el })
   }
   
   Sortable.prototype.toArray = function(opts) {
